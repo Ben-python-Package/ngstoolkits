@@ -1,23 +1,25 @@
 <!-- These are examples of badges you might want to add to your README:
      please update the URLs accordingly
 
-[![Built Status](https://api.cirrus-ci.com/github/<USER>/ngstoolkits.svg?branch=main)](https://cirrus-ci.com/github/<USER>/ngstoolkits)
-[![ReadTheDocs](https://readthedocs.org/projects/ngstoolkits/badge/?version=latest)](https://ngstoolkits.readthedocs.io/en/stable/)
-[![Coveralls](https://img.shields.io/coveralls/github/<USER>/ngstoolkits/main.svg)](https://coveralls.io/r/<USER>/ngstoolkits)
-[![PyPI-Server](https://img.shields.io/pypi/v/ngstoolkits.svg)](https://pypi.org/project/ngstoolkits/)
-[![Conda-Forge](https://img.shields.io/conda/vn/conda-forge/ngstoolkits.svg)](https://anaconda.org/conda-forge/ngstoolkits)
-[![Monthly Downloads](https://pepy.tech/badge/ngstoolkits/month)](https://pepy.tech/project/ngstoolkits)
-[![Twitter](https://img.shields.io/twitter/url/http/shields.io.svg?style=social&label=Twitter)](https://twitter.com/ngstoolkits)
+[![Built Status](https://api.cirrus-ci.com/github/<USER>/ngstools.svg?branch=main)](https://cirrus-ci.com/github/<USER>/ngstools)
+[![ReadTheDocs](https://readthedocs.org/projects/ngstools/badge/?version=latest)](https://ngstools.readthedocs.io/en/stable/)
+[![Coveralls](https://img.shields.io/coveralls/github/<USER>/ngstools/main.svg)](https://coveralls.io/r/<USER>/ngstools)
+[![PyPI-Server](https://img.shields.io/pypi/v/ngstools.svg)](https://pypi.org/project/ngstools/)
+[![Conda-Forge](https://img.shields.io/conda/vn/conda-forge/ngstools.svg)](https://anaconda.org/conda-forge/ngstools)
+[![Monthly Downloads](https://pepy.tech/badge/ngstools/month)](https://pepy.tech/project/ngstools)
+[![Twitter](https://img.shields.io/twitter/url/http/shields.io.svg?style=social&label=Twitter)](https://twitter.com/ngstools)
 -->
 
 [![Project generated with PyScaffold](https://img.shields.io/badge/-PyScaffold-005CA0?logo=pyscaffold)](https://pyscaffold.org/)
 
-# ngstoolkits
+# ngstools
 
-> Add a short description here!
+> Useful toolkits for NGS analysis
 
-A longer description of your project goes here...
+## Main Class
+### mutation
 
+## Main Function
 
 <!-- pyscaffold-notes -->
 

@@ -6,11 +6,21 @@
     PyScaffold helps you to put up the scaffold of your new Python project.
     Learn more under: https://pyscaffold.org/
 """
-from setuptools import setup
-
+from setuptools import setup,find_packages
+import sys
+sys.path.append('src')
+import ngstoolkits
 if __name__ == "__main__":
     try:
-        setup(use_scm_version={"version_scheme": "no-guess-dev"})
+        setup(
+            name="ngstoolkits",
+            version=ngstoolkits.__version__,
+            description="ngstools",
+            author="Liubo",
+            author_email="614347533@qq.com",
+            license="MIT",
+            packages=find_packages(),
+        )
     except:  # noqa
         print(
             "\n\nAn error occurred while building the project, "
