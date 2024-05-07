@@ -10,9 +10,9 @@
 # import pytest
 import sys
 sys.path.append('../src')
-from ngstoolkits import CPRA
 import pytest
 from ngstoolkits import Seq
+from ngstoolkits import CPRA
 CPRA.loadBam("test_data/pancancer689__DX2083_sijuan_20S12590085_20B12590085__Cancer.realign.bam")
 CPRA.loadReference("test_data/hg19.fa")
 

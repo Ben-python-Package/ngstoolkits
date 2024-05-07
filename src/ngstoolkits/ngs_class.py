@@ -80,9 +80,9 @@ class CPRA():
             supportNum=len(self.support_readsID_list)
             coverDepth=len(self.cover_readsID_list)
             ratio=supportNum/coverDepth
-            return f"{self.chrom}:{self.pos}\t{self.ref}\t{self.alt}\t{self.muttype()}\t{supportNum}\t{coverDepth}\t{ratio}"
+            return f"{self.chrom}\t{self.pos}\t{self.ref}\t{self.alt}\t{self.muttype}\t{supportNum}\t{coverDepth}\t{ratio}"
         else:
-            return f"{self.chrom}:{self.pos}:{self.ref}:{self.alt}"
+            return f"{self.chrom}\t{self.pos}\t{self.ref}\t{self.alt}\t*\t*\t*\t*"
 
     @property
     def muttype(self):
@@ -138,7 +138,8 @@ class CPRA():
             self.support_reads,self.support_readsID_list,self.cover_readsID_list = self.get_ins_support_reads(coverflank)
         elif self.muttype == "DEL":
             self.support_reads,self.support_readsID_list,self.cover_readsID_list = self.get_del_support_reads(coverflank)
-
+        self.support_depth = len(self.support_readsID_list)
+        self.cover_depth= len(self.cover_readsID_list)
     @lru_cache
     def get_snv_support_reads(self, coverflank=5, mapq=20, baseq=20, overlaps=True, stepper="all", orphans=True):
         Read = namedtuple('Read', ['read_name', 'pair', 'strand'])
