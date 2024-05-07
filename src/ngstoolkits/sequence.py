@@ -1,10 +1,15 @@
-
-def reverse_complement(base):
-    base = base[::-1].upper()
-    return base.replace('A', 't').\
-                replace('C', 'g').\
-                replace('T', 'a').\
-                replace('G', 'c').upper()
+class Seq:
+    @staticmethod
+    def reverse_complement(seq):
+        """
+        param DNA sequence: eg ATAG
+        return reverse_complement sequence : CTAT
+        """
+        seq = seq[::-1].upper()
+        return seq.replace('A', 't').\
+                    replace('C', 'g').\
+                    replace('T', 'a').\
+                    replace('G', 'c').upper()
 
 
 acid_info = {

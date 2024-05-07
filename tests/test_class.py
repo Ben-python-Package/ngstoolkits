@@ -9,19 +9,24 @@
 
 # import pytest
 import sys
-sys.path.append('src/ngstoolkits')
-from ngs_class import cpra
+sys.path.append('../src')
+from ngstoolkits import CPRA
 import pytest
+from ngstoolkits import Seq
+CPRA.loadBam("test_data/pancancer689__DX2083_sijuan_20S12590085_20B12590085__Cancer.realign.bam")
+CPRA.loadReference("test_data/hg19.fa")
 
-import sequence
-
-mua_a = mutation_cpra()
-sequence.get_oneletter_hgvsp("p.Ala1234Thr")
 
 def test_single_mutation():
-    mutation=ngs_class.cpra("chr19","1231","G","CT")
-    assert mutation.type=="INS"
-    mutation=ngs_class.cpra("chr19","1231","GTCA","CT")
-    assert mutation.type=="DEL"
-    mutation=ngs_class.cpra("chr19","1231","GA","CT")
-    assert mutation.type=="SNV"
+    sitea=CPRA("chr6",159188398,"C","T")
+    siteb=CPRA("chr1",65332550,"","T")
+    sitec=CPRA("chr1",8074099,"AG","")
+    sitec.get_suppot()
+    assert sitec.pos_fit == 8074100
+    sited=CPRA("chr1",8074100,"AG","")
+    assert siteb.muttype=="INS"
+    assert sited.muttype=="DEL"
+    assert sitea.muttype=="SNV"
+
+def test_Seq():
+    assert Seq.reverse_complement("ATGC")=="GCAT"

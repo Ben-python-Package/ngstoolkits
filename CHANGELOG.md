@@ -1,5 +1,5 @@
 # Changelog
 
-## Version 0.1 (development)
+## Version 1.0.0 (development)
 
 - init

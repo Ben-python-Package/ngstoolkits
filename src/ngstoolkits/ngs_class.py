@@ -1,8 +1,9 @@
 import pysam
 from collections import namedtuple
 from functools import lru_cache
-
-class cpra():
+from enum import Enum,unique
+import warnings
+class CPRA():
     """
     descriptrion a mutation in cpra( eg: chr1, 100, A, T)
     and get some useful information with Bam or reference genome:
@@ -15,7 +16,7 @@ class cpra():
     def loadReference(cls,reference):
         """
         load reference genome
-        param reference: eg: d:\Git_Repo\package_ngstools\data\hg19.fa
+        param reference FilePath: eg: d:\Git_Repo\package_ngstools\data\hg19.fa
         """
         if cls.reference is None:
             cls.reference = pysam.FastaFile(reference)
@@ -27,22 +28,61 @@ class cpra():
     def loadBam(cls,Bam):
         """
         load bam file
-        param Bam: eg: d:\Git_Repo\package_ngstools\data\test.bam
+        param Bam FilePath : eg: d:\Git_Repo\package_ngstools\data\test.bam
         """
         cls.bam = pysam.AlignmentFile(Bam)
 
     def __init__(self,CHROM:str,POS:int,REF:str,ALT:str):
         """
         Init a mutation object,
-        param chrom: eg: chr1
-        param pos: eg: 100
-        param ref: eg: A
-        param alt: eg: T
+        param chrom(str): eg: chr1
+        param pos(int): eg: 100
+        param REF(str):表示参考序列的字符串 eg: A
+        param ALT(str):表示替代序列的字符串。 eg: T
         """
         self.chrom = CHROM
         self.pos =  int(POS)
+        self.pos_fit =  int(POS)
         self.ref = REF
         self.alt = ALT
+
+        if not self._is_valid_nucleotide_sequence(REF):
+            warnings.warn(f"Invalid REF sequence '{REF}'; using empty string instead.")
+            self.ref = ""
+
+        if not self._is_valid_nucleotide_sequence(ALT):
+            warnings.warn(f"Invalid ALT sequence '{ALT}'; using empty string instead.")
+            self.alt = ""
+
+
+    @staticmethod
+    def _is_valid_nucleotide_sequence(sequence: str) -> bool:
+        valid_nucleotides = set('ATCGatcg')
+        return all(nucleotide in valid_nucleotides for nucleotide in sequence)
+
+    def _is_valid_ref_sequence(self)->int:
+        try:
+            if self.reference.fetch(self.chrom, self.pos, self.pos+len(self.ref)) == self.ref:
+                return 0
+            elif self.reference.fetch(self.chrom, self.pos+1, self.pos+1+len(self.ref))== self.ref:
+                return 1
+            else:
+                raise ValueError("ref sequence do not match with the genome file, check your data")
+        except AttributeError as e:
+            raise e.add_note("reference genome is not set, set it with cpra.loadReference(referencePath)")
+
+    @property
+    def info(self):
+        """
+        return the information of the mutation
+        """
+        if hasattr(self,'support_readsID_list'):
+            supportNum=len(self.support_readsID_list)
+            coverDepth=len(self.cover_readsID_list)
+            ratio=supportNum/coverDepth
+            return f"{self.chrom}:{self.pos}\t{self.ref}\t{self.alt}\t{self.muttype()}\t{supportNum}\t{coverDepth}\t{ratio}"
+        else:
+            return f"{self.chrom}:{self.pos}:{self.ref}:{self.alt}"
 
     @property
     def muttype(self):
@@ -54,56 +94,60 @@ class cpra():
             return "SNV"
 
     @property
-    def flank(self, length:int=10):
-        '''获取变异的侧翼序列
+    def flank10(self, length:int=10):
+        '''获取变异的侧翼10bp序列
         使用前需要通过loadReference(reference) 完成参考基因组的加载
         param length: 侧翼序列长度
-
         '''
         lbase = self.reference.fetch(self.chrom, self.pos-length,self.pos)
         rbase = self.reference.fetch(self.chrom, self.pos+len(self.ref), self.pos+len(self.ref)+length)
         return '..'.join((lbase, rbase))
 
+    def flank(self, length:int):
+        '''获取变异的任意长度侧翼序列
+        使用前需要通过loadReference(reference) 完成参考基因组的加载
+        param length: 侧翼序列长度
+        '''
+        lbase = self.reference.fetch(self.chrom, self.pos-length,self.pos)
+        rbase = self.reference.fetch(self.chrom, self.pos+len(self.ref), self.pos+len(self.ref)+length)
+        return '..'.join((lbase, rbase))
 
-    def guessbase(self):
-        try:
-            if self.reference.fetch(self.chrom, self.pos, self.pos+len(self.ref)) == self.ref:
-                return 1
-            elif self.reference.fetch(self.chrom, self.pos, self.pos+len(self.ref))== self.ref:
-                return 0
-            else:
-                raise ValueError("ref sequence do not match with the genome file, check your data")
-        except AttributeError as e:
-            raise e.add_note("reference genome is not set, set it with cpra.loadReference(referencePath)")
-
-    def get_suppot(self,bam_file, ref,coverflank=5):
+    def get_suppot(self,bam="",ref="",coverflank=5):
         """
-        get support for the mutation with special Bam File 
-        param bam_file: bam file
-        param ref: reference genome
+        get support for the mutation with special Bam File &ref;
         param coverflank: only the reads cover the ±coverflank(5) bases will be considered
-        return: 
-        support_reads_id,relation,cover_reads_id
+        get property: support_reads,support_readsID_list,cover_readsID_list
         """
+        if(self.bam is None):
+            if(bam is not None):
+                self.loadBam(bam)
+            else:
+                raise ValueError("bam file is not set, set it with cpra.loadBam(bamPath)")
+        if(self.reference is None):
+            if(ref is not None):
+                self.loadReference(ref)
+            else:
+                raise ValueError("reference genome is not set, set it with cpra.loadReference(referencePath)")
+        self.pos_fit = self.pos+ self._is_valid_ref_sequence()
         self.support_reads = []
         self.support_readsID_list = []
         self.cover_readsID_list = []
         if self.muttype == "SNV":
-            self.support_reads,self.support_readsID_list,self.cover_readsID_list = self.get_snv_support_reads(self, bam_file, ref,coverflank)
+            self.support_reads,self.support_readsID_list,self.cover_readsID_list = self.get_snv_support_reads(coverflank)
         elif self.muttype == "INS":
-            self.support_reads,self.support_readsID_list,self.cover_readsID_list = self.get_ins_support_reads(self, bam_file, ref,coverflank)
+            self.support_reads,self.support_readsID_list,self.cover_readsID_list = self.get_ins_support_reads(coverflank)
         elif self.muttype == "DEL":
-            self.support_reads,self.support_readsID_list,self.cover_readsID_list = self.get_del_support_reads(self, bam_file, ref,coverflank)
-    @property
+            self.support_reads,self.support_readsID_list,self.cover_readsID_list = self.get_del_support_reads(coverflank)
+
     @lru_cache
-    def get_snv_support_reads(VcfMut, bam_file, ref,coverflank=5, mapq=20, baseq=20, overlaps=True, stepper="all", orphans=True):
+    def get_snv_support_reads(self, coverflank=5, mapq=20, baseq=20, overlaps=True, stepper="all", orphans=True):
         Read = namedtuple('Read', ['read_name', 'pair', 'strand'])
         support_reads = []
         cover_reads = []
         start_reads = {}
-        EndSite = VcfMut.pos + len(VcfMut.ref)
-        for pileup_column in bam_file.pileup(region=str(VcfMut.chrom) + ':' + str(VcfMut.pos) + '-' + str(VcfMut.pos),mapq=mapq , baseq = baseq,
-                                            stepper=stepper, fastaFile=ref, max_depth=200000, **{"truncate": True}):
+        EndSite = self.pos_fit + len(self.ref)
+        for pileup_column in self.bam.pileup(region=str(self.chrom) + ':' + str(self.pos_fit) + '-' + str(self.pos_fit),mapq=mapq , baseq = baseq,
+                                            stepper=stepper, fastaFile=self.reference, max_depth=200000, **{"truncate": True}):
             if pileup_column.nsegments > 0:
                 for pileup_read in pileup_column.pileups:
                     aln = pileup_read.alignment
@@ -115,8 +159,8 @@ class cpra():
                             aln.query_qualities[pileup_read.query_position] < baseq:
                         continue
                     start_reads[read] = [pileup_read.query_position, aln]
-        for pileup_column in bam_file.pileup(region=str(VcfMut.chrom) + ':' + str(EndSite) + '-' + str(EndSite),
-                                            stepper=stepper, fastaFile=ref, max_depth=200000, **{"truncate": True}):
+        for pileup_column in self.bam.pileup(region=str(self.chrom) + ':' + str(EndSite) + '-' + str(EndSite),
+                                            stepper=stepper, fastaFile=self.reference, max_depth=200000, **{"truncate": True}):
             if pileup_column.nsegments > 0:
                 for pileup_read in pileup_column.pileups:
                     aln = pileup_read.alignment
@@ -130,7 +174,7 @@ class cpra():
                         start_query_position, start_aln = start_reads[read]
                         seq = start_aln.query_sequence[start_query_position:pileup_read.query_position]
                         cover_reads.append(aln)
-                        if seq.upper() == VcfMut.alt.upper():
+                        if seq.upper() == self.alt.upper():
                             support_reads.append(aln)
         support_readIDs = []
         cover_readID_list = []
@@ -141,15 +185,15 @@ class cpra():
         return [support_reads,support_readIDs,cover_readID_list]
 
     @lru_cache
-    def get_ins_support_reads(VcfMut, bam_file, ref, coverflank=5, mapq=20, baseq=20, overlaps=True, stepper="all", orphans=True):
+    def get_ins_support_reads(self, coverflank=5, mapq=20, baseq=20, overlaps=True, stepper="all", orphans=True):
         support_reads = []
         cover_reads = []
         bam = {}
-        EndSite = VcfMut.pos + len(VcfMut.ref)
-        CoverStart = VcfMut.pos-coverflank
+        EndSite = self.pos_fit + len(self.ref)
+        CoverStart = self.pos_fit-coverflank
         CoverEnd = EndSite + coverflank
-        insLength=len(VcfMut.alt)-len(VcfMut.ref)
-        for pileup_column in bam_file.pileup(region=str(VcfMut.chrom) + ':' + str(VcfMut.pos) + '-' + str(VcfMut.pos), mapq=mapq, baseq=baseq, stepper=stepper, fastaFile=ref, max_depth=200000, **{"truncate": True}):
+        insLength=len(self.alt)-len(self.ref)
+        for pileup_column in self.bam.pileup(region=str(self.chrom) + ':' + str(self.pos_fit) + '-' + str(self.pos_fit), mapq=mapq, baseq=baseq, stepper=stepper, fastaFile=self.reference, max_depth=200000, **{"truncate": True}):
             if pileup_column.nsegments > 0:
                 for pileup_read in pileup_column.pileups:
                     aln = pileup_read.alignment
@@ -158,16 +202,16 @@ class cpra():
                         cover_reads.append(aln)
                         if pileup_read.query_position and aln.cigarstring.find("I") > 0:
                             start = pileup_read.query_position-1
-                            altstop = pileup_read.query_position - 1 +len(VcfMut.alt)
-                            refstop = pileup_read.query_position-1 + len(VcfMut.ref)
-                            if aln.query_sequence[start:altstop].upper() == VcfMut.alt.upper() and \
-                                    aln.get_reference_sequence()[start:refstop].upper() == VcfMut.ref.upper():
+                            altstop = pileup_read.query_position - 1 +len(self.alt)
+                            refstop = pileup_read.query_position-1 + len(self.ref)
+                            if aln.query_sequence[start:altstop].upper() == self.alt.upper() and \
+                                    aln.get_reference_sequence()[start:refstop].upper() == self.ref.upper():
                                 support_reads.append(aln)
-                            elif aln.query_sequence[pileup_read.query_position-insLength:pileup_read.query_position -insLength+ len(VcfMut.alt)].upper() == VcfMut.alt.upper() and \
-                                aln.get_reference_sequence()[pileup_read.query_position-insLength:pileup_read.query_position - insLength + len(VcfMut.ref)].upper() == VcfMut.ref.upper():
+                            elif aln.query_sequence[pileup_read.query_position-insLength:pileup_read.query_position -insLength+ len(self.alt)].upper() == self.alt.upper() and \
+                                aln.get_reference_sequence()[pileup_read.query_position-insLength:pileup_read.query_position - insLength + len(self.ref)].upper() == self.ref.upper():
                                 support_reads.append(aln)
-                            elif aln.query_sequence[pileup_read.query_position:pileup_read.query_position + len(VcfMut.alt)].upper() == VcfMut.alt.upper() and \
-                                aln.get_reference_sequence()[pileup_read.query_position:pileup_read.query_position + len(VcfMut.ref)].upper() == VcfMut.ref.upper():
+                            elif aln.query_sequence[pileup_read.query_position:pileup_read.query_position + len(self.alt)].upper() == self.alt.upper() and \
+                                aln.get_reference_sequence()[pileup_read.query_position:pileup_read.query_position + len(self.ref)].upper() == self.ref.upper():
                                 support_reads.append(aln)
         support_readID_list = []
         cover_readID_list = []
@@ -178,15 +222,15 @@ class cpra():
         return [support_reads,support_readID_list,cover_readID_list]
 
     @lru_cache
-    def get_del_support_reads(VcfMut, bam_file, ref, coverflank=5, mapq=20, baseq=20, overlaps=True, stepper="all", orphans=True):
+    def get_del_support_reads(self, coverflank=5, mapq=20, baseq=20, overlaps=True, stepper="all", orphans=True):
         support_reads = []
         cover_reads = []
         bam = {}
-        EndSite = VcfMut.pos + len(VcfMut.ref)
-        CoverStart = VcfMut.pos-coverflank
+        EndSite = self.pos_fit + len(self.ref)
+        CoverStart = self.pos_fit-coverflank
         CoverEnd = EndSite + coverflank
-        for pileup_column in bam_file.pileup(region=str(VcfMut.chrom) + ':' + str(VcfMut.pos) + '-' + str(EndSite), mapq=mapq , baseq = baseq,
-                                            stepper=stepper, fastaFile=ref, max_depth=200000, **{"truncate": True}):
+        for pileup_column in self.bam.pileup(region=str(self.chrom) + ':' + str(self.pos_fit) + '-' + str(EndSite), mapq=mapq , baseq = baseq,
+                                            stepper=stepper, fastaFile=self.reference, max_depth=200000, **{"truncate": True}):
             if pileup_column.nsegments > 0:
                 for pileup_read in pileup_column.pileups:
                     aln = pileup_read.alignment
@@ -195,11 +239,11 @@ class cpra():
                         cover_reads.append(aln)
                         if pileup_read.query_position_or_next and aln.cigarstring.find("D") > 0:
                             start = pileup_read.query_position_or_next - 1
-                            refstop = pileup_read.query_position_or_next + len(VcfMut.ref) - 1
-                            altstop = pileup_read.query_position_or_next +len(VcfMut.alt) -1
-                            if aln.get_reference_sequence()[start:refstop].upper() == VcfMut.ref.upper() and aln.query_sequence[start:altstop].upper() == VcfMut.alt.upper():
+                            refstop = pileup_read.query_position_or_next + len(self.ref) - 1
+                            altstop = pileup_read.query_position_or_next +len(self.alt) -1
+                            if aln.get_reference_sequence()[start:refstop].upper() == self.ref.upper() and aln.query_sequence[start:altstop].upper() == self.alt.upper():
                                 support_reads.append(aln)
-                            elif aln.get_reference_sequence()[start+1:refstop+1].upper() == VcfMut.ref.upper() and aln.query_sequence[start+1:altstop+1].upper() == VcfMut.alt.upper():
+                            elif aln.get_reference_sequence()[start+1:refstop+1].upper() == self.ref.upper() and aln.query_sequence[start+1:altstop+1].upper() == self.alt.upper():
                                 support_reads.append(aln)
         support_readsID_list = []
         cover_readID_list = []
