@@ -104,41 +104,35 @@ class CPRA():
     @property
     def CoverReadList(self):
         if hasattr(self,'cover_readsID_list'):
-            return self.cover_readsID_list
+            return self._cover_readsID_list
         else :
             self.get_suppot()
-            return self.cover_readsID_list
+            return self._cover_readsID_list
     @property
     def CoverReadNum(self):
-        if hasattr(self,'cover_readsID_list'):
-            return len(self.cover_readsID_list)
-        else :
-            self.get_suppot()
-            return len(self.cover_readsID_list)
+        return len(self.CoverReadList)
 
     @property
     def supportReads(self):
         if hasattr(self,'support_reads'):
-            return self.support_reads
+            return self._support_reads
         else :
             self.get_suppot()
-            return self.support_reads
+            return self._support_reads
 
     @property
-    def support_readsID_list(self):
+    def supportreadsIDlist(self):
         if hasattr(self,'support_readsID_list'):
-            return self.support_readsID_list
+            return self._support_readsID_list
         else :
             self.get_suppot()
-            return self.support_readsID_list
+            return self._support_readsID_list
 
     @property
     def supportReadNum(self):
-        if hasattr(self,'support_readsID_list'):
-            return len(self.support_readsID_list)
-        else :
-            self.get_suppot()
-            return len(self.support_readsID_list)
+        return len(self.supportreadsIDlist)
+
+    @property
     def ratio(self):
         return self.supportReadNum/self.CoverReadNum
 
@@ -168,17 +162,16 @@ class CPRA():
             else:
                 raise ValueError("reference genome is not set, set it with cpra.loadReference(referencePath)")
         self.pos_fit = self.pos+ self._is_valid_ref_sequence()
-        self.support_reads = []
-        self.support_readsID_list = []
-        self.cover_readsID_list = []
+        self._support_reads = []
+        self._support_readsID_list = []
+        self._cover_readsID_list = []
         if self.muttype == "SNV":
-            self.support_reads,self.support_readsID_list,self.cover_readsID_list = self._get_snv_support_reads(coverflank)
+            self._support_reads,self._support_readsID_list,self._cover_readsID_list = self._get_snv_support_reads(coverflank)
         elif self.muttype == "INS":
-            self.support_reads,self.support_readsID_list,self.cover_readsID_list = self._get_ins_support_reads(coverflank)
+            self._support_reads,self._support_readsID_list,self._cover_readsID_list = self._get_ins_support_reads(coverflank)
         elif self.muttype == "DEL":
-            self.support_reads,self.support_readsID_list,self.cover_readsID_list = self._get_del_support_reads(coverflank)
-        self.support_depth = len(self.support_readsID_list)
-        self.cover_depth= len(self.cover_readsID_list)
+            self._support_reads,self._support_readsID_list,self._cover_readsID_list = self._get_del_support_reads(coverflank)
+
     @lru_cache
     def _get_snv_support_reads(self, coverflank=5, mapq=20, baseq=20, overlaps=True, stepper="all", orphans=True):
         Read = namedtuple('Read', ['read_name', 'pair', 'strand'])
