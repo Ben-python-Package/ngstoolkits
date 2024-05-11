@@ -53,7 +53,8 @@ class CPRA():
         if not self._is_valid_nucleotide_sequence(ALT):
             warnings.warn(f"Invalid ALT sequence '{ALT}'; using empty string instead.")
             self.alt = ""
-
+        if hasattr(self,'bam'):
+            self.get_suppot()
 
     @staticmethod
     def _is_valid_nucleotide_sequence(sequence: str) -> bool:
@@ -77,10 +78,7 @@ class CPRA():
         return the information of the mutation
         """
         if hasattr(self,'support_readsID_list'):
-            supportNum=len(self.support_readsID_list)
-            coverDepth=len(self.cover_readsID_list)
-            ratio=supportNum/coverDepth
-            return f"{self.chrom}\t{self.pos}\t{self.ref}\t{self.alt}\t{self.muttype}\t{supportNum}\t{coverDepth}\t{ratio}"
+            return f"{self.chrom}\t{self.pos}\t{self.ref}\t{self.alt}\t{self.muttype}\t{self.supportReadNum}\t{self.CoverReadNum}\t{self.ratio}"
         else:
             return f"{self.chrom}\t{self.pos}\t{self.ref}\t{self.alt}\t*\t*\t*\t*"
 
@@ -102,6 +100,47 @@ class CPRA():
         lbase = self.reference.fetch(self.chrom, self.pos-length,self.pos)
         rbase = self.reference.fetch(self.chrom, self.pos+len(self.ref), self.pos+len(self.ref)+length)
         return '..'.join((lbase, rbase))
+    
+    @property
+    def CoverReadList(self):
+        if hasattr(self,'cover_readsID_list'):
+            return self.cover_readsID_list
+        else :
+            self.get_suppot()
+            return self.cover_readsID_list
+    @property
+    def CoverReadNum(self):
+        if hasattr(self,'cover_readsID_list'):
+            return len(self.cover_readsID_list)
+        else :
+            self.get_suppot()
+            return len(self.cover_readsID_list)
+
+    @property
+    def supportReads(self):
+        if hasattr(self,'support_reads'):
+            return self.support_reads
+        else :
+            self.get_suppot()
+            return self.support_reads
+
+    @property
+    def support_readsID_list(self):
+        if hasattr(self,'support_readsID_list'):
+            return self.support_readsID_list
+        else :
+            self.get_suppot()
+            return self.support_readsID_list
+
+    @property
+    def supportReadNum(self):
+        if hasattr(self,'support_readsID_list'):
+            return len(self.support_readsID_list)
+        else :
+            self.get_suppot()
+            return len(self.support_readsID_list)
+    def ratio(self):
+        return self.supportReadNum/self.CoverReadNum
 
     def flank(self, length:int):
         '''获取变异的任意长度侧翼序列
@@ -133,15 +172,15 @@ class CPRA():
         self.support_readsID_list = []
         self.cover_readsID_list = []
         if self.muttype == "SNV":
-            self.support_reads,self.support_readsID_list,self.cover_readsID_list = self.get_snv_support_reads(coverflank)
+            self.support_reads,self.support_readsID_list,self.cover_readsID_list = self._get_snv_support_reads(coverflank)
         elif self.muttype == "INS":
-            self.support_reads,self.support_readsID_list,self.cover_readsID_list = self.get_ins_support_reads(coverflank)
+            self.support_reads,self.support_readsID_list,self.cover_readsID_list = self._get_ins_support_reads(coverflank)
         elif self.muttype == "DEL":
-            self.support_reads,self.support_readsID_list,self.cover_readsID_list = self.get_del_support_reads(coverflank)
+            self.support_reads,self.support_readsID_list,self.cover_readsID_list = self._get_del_support_reads(coverflank)
         self.support_depth = len(self.support_readsID_list)
         self.cover_depth= len(self.cover_readsID_list)
     @lru_cache
-    def get_snv_support_reads(self, coverflank=5, mapq=20, baseq=20, overlaps=True, stepper="all", orphans=True):
+    def _get_snv_support_reads(self, coverflank=5, mapq=20, baseq=20, overlaps=True, stepper="all", orphans=True):
         Read = namedtuple('Read', ['read_name', 'pair', 'strand'])
         support_reads = []
         cover_reads = []
@@ -186,7 +225,7 @@ class CPRA():
         return [support_reads,support_readIDs,cover_readID_list]
 
     @lru_cache
-    def get_ins_support_reads(self, coverflank=5, mapq=20, baseq=20, overlaps=True, stepper="all", orphans=True):
+    def _get_ins_support_reads(self, coverflank=5, mapq=20, baseq=20, overlaps=True, stepper="all", orphans=True):
         support_reads = []
         cover_reads = []
         bam = {}
@@ -223,7 +262,7 @@ class CPRA():
         return [support_reads,support_readID_list,cover_readID_list]
 
     @lru_cache
-    def get_del_support_reads(self, coverflank=5, mapq=20, baseq=20, overlaps=True, stepper="all", orphans=True):
+    def _get_del_support_reads(self, coverflank=5, mapq=20, baseq=20, overlaps=True, stepper="all", orphans=True):
         support_reads = []
         cover_reads = []
         bam = {}
