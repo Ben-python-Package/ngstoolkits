@@ -77,7 +77,7 @@ class CPRA():
         """
         return the information of the mutation
         """
-        if hasattr(self,'support_readsID_list'):
+        if hasattr(self,'_support_readsID_list'):
             return f"{self.chrom}\t{self.pos}\t{self.ref}\t{self.alt}\t{self.muttype}\t{self.supportReadNum}\t{self.CoverReadNum}\t{self.ratio}"
         else:
             return f"{self.chrom}\t{self.pos}\t{self.ref}\t{self.alt}\t*\t*\t*\t*"
@@ -100,10 +100,10 @@ class CPRA():
         lbase = self.reference.fetch(self.chrom, self.pos-length,self.pos)
         rbase = self.reference.fetch(self.chrom, self.pos+len(self.ref), self.pos+len(self.ref)+length)
         return '..'.join((lbase, rbase))
-    
+
     @property
     def CoverReadList(self):
-        if hasattr(self,'cover_readsID_list'):
+        if hasattr(self,'_cover_readsID_list'):
             return self._cover_readsID_list
         else :
             self.get_suppot()
@@ -114,7 +114,7 @@ class CPRA():
 
     @property
     def supportReads(self):
-        if hasattr(self,'support_reads'):
+        if hasattr(self,'_support_reads'):
             return self._support_reads
         else :
             self.get_suppot()
@@ -122,7 +122,7 @@ class CPRA():
 
     @property
     def supportreadsIDlist(self):
-        if hasattr(self,'support_readsID_list'):
+        if hasattr(self,'_support_readsID_list'):
             return self._support_readsID_list
         else :
             self.get_suppot()
