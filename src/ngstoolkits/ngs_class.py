@@ -119,6 +119,38 @@ class CPRA():
         else :
             self.get_suppot()
             return self._support_reads
+    def plot_support(self, savepath):
+        """
+        plot the support for the mutation
+        param savepath: eg: d:\Git_Repo\package_ngstools\data\test.png
+        """
+        import matplotlib.pyplot as plt
+        plot_y_range=len(self.supportReads)
+        plt.figure(figsize=(410 / 96, plot_y_range / 96))  # 单位英寸，注意DPI转换
+
+        for pos in range(52524252, 52524252 + 1):
+            plt.axvline(x=self.pos, color="#ffb6c1", linewidth=2.8) # 标注关注的突变起始位置
+            plt.axvline(x=self.pos+len(self.ref), color="#ffb6c1", linewidth=2.8) # 标注关注的突变终止位置
+        plot_Read_index=0
+        for aln in self.supportReads:
+            plot_Read_index+=1
+            plt.text(aln.reference_start,plot_Read_index, aln.query_sequence, fontsize=8)
+
+        # 由于Python中没有直接对应于R的scale_colour_manual的简单转换，
+        # 这里不直接展示图例设置，但可以通过plt.legend手动设置
+
+        # 设置标题、坐标轴标签等
+        plt.title(self.chrom+":"+str(self.pos)+"-"+self.ref+">"+self.alt, fontsize=20)
+        plt.xlabel(None)  # 不显示x轴标签
+        plt.ylabel("reads")
+        plt.xlim(pos-200, pos + 200)
+        plt.ylim(0,plot_y_range)
+        plt.savefig(savepath)
+        # 显示图形
+        plt.show()
+
+
+
 
     @property
     def supportreadsIDlist(self):
