@@ -18,7 +18,7 @@ CPRA.loadReference("test_data/hg19.fa")
 
 
 def test_single_mutation():
-    sitea=CPRA("chr6",159188398,"C","T")
+    sitea=CPRA("chr2","21230379","C","T")
     siteb=CPRA("chr1",65332550,"","T")
     sitec=CPRA("chr1",8074099,"AG","")
     sitec.get_suppot()
