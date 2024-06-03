@@ -1,6 +1,6 @@
 import sys
 import os
-from .ngs_class import CPRA
+from .cpra import CPRA
 from .sequence import Seq
 __version__ = "1.0.0rc7"
 

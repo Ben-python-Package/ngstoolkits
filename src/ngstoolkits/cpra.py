@@ -8,10 +8,8 @@ class CPRA():
     descriptrion a mutation in cpra( eg: chr1, 100, A, T)
     and get some useful information with Bam or reference genome:
     """
-
     reference=None
     bam=None
-
     @classmethod
     def loadReference(cls,reference):
         """
@@ -148,9 +146,6 @@ class CPRA():
         plt.savefig(savepath)
         # 显示图形
         plt.show()
-
-
-
 
     @property
     def supportreadsIDlist(self):
