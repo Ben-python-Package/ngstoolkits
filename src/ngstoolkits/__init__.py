@@ -1,11 +1,13 @@
 import sys
 import os
 from .cpra import CPRA
-from .sequence import Seq
+from .sequence import SeqFunction
+from class_bam import BAM
+from .Fasta import FASTA
 __version__ = "1.0.0rc7"
 
 # 指定from ngstoolkits import * 时导入的内容
-__all__ = ["CPRA","Seq"]
+__all__ = ["CPRA","Seq","BAM"]
 
 if sys.version_info[:2] >= (3, 8):
     # TODO: Import directly (no need for conditional) when `python_requires = >= 3.8`

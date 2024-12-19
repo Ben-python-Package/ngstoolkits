@@ -11,9 +11,11 @@
 -->
 
 Author : Liubo <[Ben-unbelieveable](git@github.com:Ben-unbelieveable/package_ngstoolkits.git)>
-# ngstools
+# ngstoolkits
 
-> Useful toolkits for NGS analysis
+> Useful ToolKits for Next Generation Sequence analysis
+
+
 
 ## Main Class
 ### CPRA

@@ -1,4 +1,20 @@
-class Seq:
+class SeqFunction:
+    @staticmethod
+    def base_count(seq):
+        """
+        param DNA sequence: eg ATAG
+        return list(number of each base in [ACGTN])
+        """
+        seq = seq.upper()
+        counts = {'A': 0, 'T': 0, 'C': 0, 'G': 0,"N":0}
+        for nucleotide in seq:
+            if nucleotide in counts:
+                counts[nucleotide] += 1
+        # 返回计数结果组成的列表
+        base_list=[counts['A'], counts['C'], counts['G'], counts['T']]
+        #return max(base_list)/(sum(base_list)+0.00001)
+        return base_list
+
     @staticmethod
     def reverse_complement(seq):
         """
@@ -10,6 +26,7 @@ class Seq:
                     replace('C', 'g').\
                     replace('T', 'a').\
                     replace('G', 'c').upper()
+    @staticmethod
     def GC_content(seq):
         """
         param DNA sequence: eg ATAG
@@ -18,6 +35,7 @@ class Seq:
         """
         seq = seq.upper()
         return (seq.count('G') + seq.count('C')) / len(seq)
+    @staticmethod
     def GC_skew(seq):
         """
         param DNA sequence: eg ATAG
@@ -25,6 +43,7 @@ class Seq:
         method : (G-C)/(G+C)
         """
         return (seq.count('G') - seq.count('C')) /  (seq.count('G') + seq.count('C'))
+
 
 
 acid_info = {

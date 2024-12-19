@@ -15,7 +15,7 @@ if __name__ == "__main__":
         setup(
             name="ngstoolkits",
             version=ngstoolkits.__version__,
-            description="ngstools",
+            description="ngstoolkits",
             author="Liubo",
             author_email="614347533@qq.com",
             license="MIT",

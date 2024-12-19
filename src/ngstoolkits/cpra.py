@@ -90,7 +90,7 @@ class CPRA():
             return "SNV"
 
     @property
-    def flank10(self, length:int=10):
+    def flank10(self, length:int=10) -> str:
         '''获取变异的侧翼10bp序列
         使用前需要通过loadReference(reference) 完成参考基因组的加载
         param length: 侧翼序列长度
