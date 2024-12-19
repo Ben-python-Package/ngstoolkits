@@ -10,6 +10,21 @@ class Seq:
                     replace('C', 'g').\
                     replace('T', 'a').\
                     replace('G', 'c').upper()
+    def GC_content(seq):
+        """
+        param DNA sequence: eg ATAG
+        return GC content : 0.5
+        method : (G+C)/(G+C+A+T)
+        """
+        seq = seq.upper()
+        return (seq.count('G') + seq.count('C')) / len(seq)
+    def GC_skew(seq):
+        """
+        param DNA sequence: eg ATAG
+        return GC skew : 0.5
+        method : (G-C)/(G+C)
+        """
+        return (seq.count('G') - seq.count('C')) /  (seq.count('G') + seq.count('C'))
 
 
 acid_info = {
