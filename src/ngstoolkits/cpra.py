@@ -3,6 +3,8 @@ from collections import namedtuple
 from functools import lru_cache
 from enum import Enum,unique
 import warnings
+from .config import config
+
 class CPRA():
     """
     descriptrion a mutation in cpra( eg: chr1, 100, A, T)
@@ -11,38 +13,49 @@ class CPRA():
     reference=None
     bam=None
     @classmethod
-    def loadReference(cls,reference):
+    def loadReference(cls,reference=None):
         """
         load reference genome
         param reference FilePath: eg: d:\Git_Repo\package_ngstools\data\hg19.fa
         """
+        ref_path = reference or config.reference
+        if ref_path is None:
+            raise ValueError("No reference genome specified. Please either provide a path or set it in config.")
+            
         if cls.reference is None:
-            cls.reference = pysam.FastaFile(reference)
+            cls.reference = pysam.FastaFile(ref_path)
         else:
-            cls.reference = pysam.FastaFile(reference)
+            cls.reference = pysam.FastaFile(ref_path)
             print("reference has been loaded & reloaded")
 
     @classmethod
-    def loadBam(cls,Bam):
+    def loadBam(cls,Bam=None):
         """
         load bam file
         param Bam FilePath : eg: d:\Git_Repo\package_ngstools\data\test.bam
         """
-        cls.bam = pysam.AlignmentFile(Bam)
+        bam_path = Bam or config.bam
+        if bam_path is None:
+            raise ValueError("No BAM file specified. Please either provide a path or set it in config.")
+            
+        cls.bam = pysam.AlignmentFile(bam_path)
 
-    def __init__(self,CHROM:str,POS:int,REF:str,ALT:str):
+    def __init__(self,CHROM:str,POS:int,REF:str,ALT:str,base:int=1):
         """
         Init a mutation object,
         param chrom(str): eg: chr1
         param pos(int): eg: 100
         param REF(str):表示参考序列的字符串 eg: A
         param ALT(str):表示替代序列的字符串。 eg: T
+        param base: 位置计数方式，0表示0-based，1表示1-based(默认)
         """
         self.chrom = CHROM
-        self.pos =  int(POS)
-        self.pos_fit =  int(POS)
+        self._pos_1base = POS + (1 - base)  # 转换为1-based并保存
+        self.pos = self._pos_1base  # 对外接口保持1-based
+        self.pos_fit = self._pos_1base  # 对外接口保持1-based
         self.ref = REF
         self.alt = ALT
+        self._base = base  # 保存用户选择的坐标系统
 
         if not self._is_valid_nucleotide_sequence(REF):
             warnings.warn(f"Invalid REF sequence '{REF}'; using empty string instead.")
@@ -59,11 +72,36 @@ class CPRA():
         valid_nucleotides = set('ATCGatcg')
         return all(nucleotide in valid_nucleotides for nucleotide in sequence)
 
+    def _get_pos_in_base(self, base: int = None) -> int:
+        """获取指定坐标系统下的位置。
+        
+        Args:
+            base: 目标坐标系统，0表示0-based，1表示1-based
+                 如果为None，则使用初始化时的坐标系统
+        
+        Returns:
+            int: 转换后的位置
+        """
+        if base is None:
+            base = self._base
+        return self._pos_1base - (1 - base)
+
+    @property
+    def pos_0based(self) -> int:
+        """获取0-based位置"""
+        return self._get_pos_in_base(0)
+
+    @property
+    def pos_1based(self) -> int:
+        """获取1-based位置"""
+        return self._get_pos_in_base(1)
+
     def _is_valid_ref_sequence(self)->int:
         try:
-            if self.reference.fetch(self.chrom, self.pos, self.pos+len(self.ref)) == self.ref:
+            pos_0based = self.pos_0based
+            if self.reference.fetch(self.chrom, pos_0based, pos_0based + len(self.ref)) == self.ref:
                 return 0
-            elif self.reference.fetch(self.chrom, self.pos+1, self.pos+1+len(self.ref))== self.ref:
+            elif self.reference.fetch(self.chrom, pos_0based + 1, pos_0based + 1 + len(self.ref))== self.ref:
                 return 1
             else:
                 raise ValueError("ref sequence do not match with the genome file, check your data")
